@@ -47,7 +47,7 @@ void loop() {
   Serial.print(DHT.temperature, 2);
   Serial.print("|H:");
   Serial.print(DHT.humidity, 2);
-  Serial.print("|D:");
+  Serial.print("|W:");
   Serial.println(dewPoint(DHT.temperature,DHT.humidity), 2);
   delay(DELAY);
 }

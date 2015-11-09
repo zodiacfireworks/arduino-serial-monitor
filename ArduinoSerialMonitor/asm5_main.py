@@ -3,37 +3,96 @@ from PyQt5 import QtWidgets
 from PyQt5 import QtSerialPort
 
 from asm5_gui import Ui_MainWindow
-from asm5_mpl import ASMPlotCanvasStatic
-from asm5_mpl import ASMPlotCanvasDynamic
+from asm5_mpl import ASMPlotCanvas
+from asm5_mpl import ASMAccelerometerPlot
+from asm5_mpl import ASMBarometerPlot
+from asm5_mpl import ASMThermohygrometer
+from asm5_mpl import ASMUltrasonicPlot
+from asm5_mpl import ASMUVRadiationPlot
 
+import datetime
 import sys
-import serial
-import serial.tools.list_ports
 
 _translate = QtCore.QCoreApplication.translate
 
 # ASM Variables and functions --------------------------------------------------
 ProgramName = "Arduino Serial Monitor"
 
+ACE = "Accelerometer"
+BAR = "Barometer"
+THE = "Thermohygrometer"
+ULT = "Ultasonic Rangin Module"
+UVR = "UV Radiation Sensor"
+
 ASMSensorList = [
-    "Select sensor",
-    "Accelerometer",
-    "Barometer",
-    "Termohigrometer",
-    "Ultasonic Rangin Module"
+    ACE,
+    BAR,
+    THE,
+    ULT,
+    UVR,
 ]
 
+ASMSensorDataKeys = {
+    ACE: ["X", "Y", "Z"],
+    BAR: ["S", "T", "P"],
+    THE: ["S", "T", "H", "W"],
+    ULT: ["D"],
+    UVR: ["U"],
+}
 
-def ASMScanSerialPorts():
-    availablePorts = serial.tools.list_ports.comports()
-    enabledPorts = [port for port in availablePorts if port[2] != 'n/a']
-    return enabledPorts
+ASMSensorMagnitudeMap = {
+    "t": {
+        "Name": "Time",
+        "Label": "Time (s)",
+    },
+    "X": {
+        "Name": "X angle",
+        "Label": "X angle (deg)",
+    },
+    "Y": {
+        "Name": "Y angle",
+        "Label": "Y angle (deg)",
+    },
+    "Z": {
+        "Name": "Z angle",
+        "Label": "Z angle (deg)",
+    },
+    "S": {
+        "Name": "Status",
+        "Label": "Status",
+    },
+    "T": {
+        "Name": "Temperature",
+        "Label": "Temperature (°C)",
+    },
+    "P": {
+        "Name": "Pressure",
+        "Label": "Pressure (mmHg)",
+    },
+    "H": {
+        "Name": "Humidity",
+        "Label": "Humidity (%)",
+    },
+    "D": {
+        "Name": "Distance",
+        "Label": "Distance (cm)",
+    },
+    "W": {
+        "Name": "Dew Point",
+        "Label": "Dew Point (°C)",
+    },
+    "U": {
+        "Name": "UV Intensity",
+        "Label": "UV Intensity (mW/cm^2)",
+    },
+    "-": {
+        "Name": "None",
+        "Label": "None",
+    },
+}
 
-
-def ASMSerialPortsNameList():
-    enabledPorts = ASMScanSerialPorts()
-    enabledPortsNames = [port[1] for port in enabledPorts]
-    return enabledPortsNames
+ASMGoodStatus = 0
+ASMBadData = -999.0
 
 
 # ASM GUI object and functions -------------------------------------------------
@@ -41,21 +100,29 @@ class ASM(QtWidgets.QMainWindow):
 
     def __init__(self):
         super(ASM, self).__init__()
-        self.ui = Ui_MainWindow()
-        self.ui.setupUi(self)
 
-        self.ui.SELSensor.currentIndexChanged.connect(self.SELSensorOnCurrentIndexChanged)
-        self.ui.SELBaudRate.currentIndexChanged.connect(self.SELBaudRateOnCurrentIndexChanged)
-        self.ui.SELSerialPort.currentIndexChanged.connect(self.SELSerialPortOnCurrentIndexChanged)
-        self.ui.BTNOpenPort.clicked.connect(self.BTNOpenPortOnClick)
-        self.ui.BTNClosePort.clicked.connect(self.BTNClosePortOnClick)
+        self.SerialPort = None
+        self.SerialPortInfo = None
+        self.Time = 0
+        self.Data = {}
 
-        self.ui.PlotLayout.addWidget(ASMPlotCanvasDynamic(self.ui.DisplayPanel, width=5, height=4, dpi=100))
-        # self.ui.INDelay.clicked.connect(self.Dummy)
-        # self.ui.BTNSetDelay.clicked.connect(self.Dummy)
+        self.UserInterface = Ui_MainWindow()
+        self.UserInterface.setupUi(self)
 
-        # self.SerialPort = QtSerialPort.QSerialPort()
-        # self.SerialPortInfo = None
+        for sensorName in ASMSensorList:
+            self.UserInterface.SELSensor.addItem(_translate("MainWindow", sensorName))
+
+        self.UserInterface.SELSensor.currentIndexChanged.connect(self.SELSensorOnCurrentIndexChanged)
+        self.UserInterface.SELBaudRate.currentIndexChanged.connect(self.SELBaudRateOnCurrentIndexChanged)
+        self.UserInterface.SELSerialPort.currentIndexChanged.connect(self.SELSerialPortOnCurrentIndexChanged)
+        self.UserInterface.BTNOpenPort.clicked.connect(self.BTNOpenPortOnClick)
+        self.UserInterface.BTNClosePort.clicked.connect(self.BTNClosePortOnClick)
+
+        self.PlotCanvas = ASMPlotCanvas(self.UserInterface.DisplayPanel, width=5, height=4, dpi=100)
+        self.UserInterface.PlotLayout.addWidget(self.PlotCanvas)
+
+        # self.UserInterface.INDelay.clicked.connect(self.Dummy)
+        self.UserInterface.BTNSetDelay.clicked.connect(self.BTNSetDelayOnClick)
 
         """
             SELSensor
@@ -79,16 +146,13 @@ class ASM(QtWidgets.QMainWindow):
             LDCTime
             PlotLayout
         """
-        # propertyList = dir(self.ui.BTNOpenPort)
-        # propertyList = dir(self.ui.SELSensor)
-        # propertyList.sort()
-        # for i in propertyList:
-        #     print(i)
-        # print()
-        self.show()
 
-    def Dummy(self):
-        print("holi")
+        # properties = dir(self.UserInterface.INDelay)
+        # for property in properties:
+        #     if '_' not in property:
+        #         print(property)
+        #         pass
+        self.show()
 
     def _ScanSerialPorts(self):
         AvailableSerialPorts = QtSerialPort.QSerialPortInfo.availablePorts()
@@ -99,110 +163,239 @@ class ASM(QtWidgets.QMainWindow):
     def _updateSELSerialPortItems(self):
         AvailableSerialPortsNames = self._ScanSerialPorts()
 
-        self.ui.SELSerialPort.setItemText(0, _translate("MainWindow", "Select port"))
+        self.UserInterface.SELSerialPort.setItemText(0, _translate("MainWindow", "Select port"))
 
         if len(AvailableSerialPortsNames) == 0:
-            self.ui.SELSerialPort.setItemText(0, _translate("MainWindow", "Serial ports not found"))
+            self.UserInterface.SELSerialPort.setItemText(0, _translate("MainWindow", "Serial ports not found"))
 
         else:
-            for i in range(1, self.ui.SELSerialPort.count() + 1):
-                self.ui.SELSerialPort.removeItem(i)
-            self.ui.SELSerialPort.addItems(AvailableSerialPortsNames)
+            for i in range(1, self.UserInterface.SELSerialPort.count() + 1):
+                self.UserInterface.SELSerialPort.removeItem(i)
+            self.UserInterface.SELSerialPort.addItems(AvailableSerialPortsNames)
 
     def _EnableSELSensor(self):
-        if self.ui.BTNClosePort.isEnabled():
-            self.ui.SELSensor.setEnabled(False)
+        if self.UserInterface.BTNClosePort.isEnabled():
+            self.UserInterface.SELSensor.setEnabled(False)
         else:
-            self.ui.SELSensor.setEnabled(True)
+            self.UserInterface.SELSensor.setEnabled(True)
 
     def _EnableSELSerialPort(self):
         conditions = [
-            self.ui.SELSensor.isEnabled(),
-            self.ui.SELSensor.currentIndex() != 0,
+            self.UserInterface.SELSensor.isEnabled(),
+            self.UserInterface.SELSensor.currentIndex() != 0,
         ]
 
         if all(conditions):
             self._updateSELSerialPortItems()
-            self.ui.SELSerialPort.setEnabled(True)
+            self.UserInterface.SELSerialPort.setEnabled(True)
         else:
-            self.ui.SELSerialPort.setEnabled(False)
-            self.ui.SELSerialPort.setCurrentIndex(0)
+            self.UserInterface.SELSerialPort.setEnabled(False)
+            self.UserInterface.SELSerialPort.setCurrentIndex(0)
 
     def _EnableSELBaudRate(self):
         conditions = [
-            self.ui.SELSensor.isEnabled(),
-            self.ui.SELSensor.currentIndex() != 0,
-            self.ui.SELSerialPort.isEnabled(),
-            self.ui.SELSerialPort.currentIndex() != 0,
+            self.UserInterface.SELSensor.isEnabled(),
+            self.UserInterface.SELSensor.currentIndex() != 0,
+            self.UserInterface.SELSerialPort.isEnabled(),
+            self.UserInterface.SELSerialPort.currentIndex() != 0,
         ]
 
         if all(conditions):
-            self.ui.SELBaudRate.setEnabled(True)
+            self.UserInterface.SELBaudRate.setEnabled(True)
         else:
-            self.ui.SELBaudRate.setEnabled(False)
-            self.ui.SELBaudRate.setCurrentIndex(0)
+            self.UserInterface.SELBaudRate.setEnabled(False)
+            self.UserInterface.SELBaudRate.setCurrentIndex(0)
 
     def _EnableBTNOpenPort(self):
         conditions = [
-            self.ui.SELSensor.isEnabled(),
-            self.ui.SELSensor.currentIndex() != 0,
-            self.ui.SELSerialPort.isEnabled(),
-            self.ui.SELSerialPort.currentIndex() != 0,
-            self.ui.SELBaudRate.isEnabled(),
-            self.ui.SELBaudRate.currentIndex() != 0,
+            self.UserInterface.SELSensor.isEnabled(),
+            self.UserInterface.SELSensor.currentIndex() != 0,
+            self.UserInterface.SELSerialPort.isEnabled(),
+            self.UserInterface.SELSerialPort.currentIndex() != 0,
+            self.UserInterface.SELBaudRate.isEnabled(),
+            self.UserInterface.SELBaudRate.currentIndex() != 0,
         ]
 
         if all(conditions):
-            self.ui.BTNOpenPort.setEnabled(True)
+            self.UserInterface.BTNOpenPort.setEnabled(True)
         else:
-            self.ui.BTNOpenPort.setEnabled(False)
+            self.UserInterface.BTNOpenPort.setEnabled(False)
 
     def _EnableBTNClosePort(self):
-        # BTNOpenPort
-        pass
+        conditions = [
+            not self.UserInterface.SELSensor.isEnabled()
+        ]
+
+        if all(conditions):
+            self.UserInterface.BTNClosePort.setEnabled(True)
+        else:
+            self.UserInterface.BTNClosePort.setEnabled(False)
 
     def _EnableINDelay(self):
         conditions = [
-            self.ui.BTNClosePort.isEnabled(),
+            self.UserInterface.BTNClosePort.isEnabled(),
         ]
 
         if all(conditions):
-            self.ui.INDelay.setEnabled(True)
+            self.UserInterface.INDelay.setEnabled(True)
         else:
-            self.ui.INDelay.setEnabled(False)
+            self.UserInterface.INDelay.setEnabled(False)
 
     def _EnableBTNSetDelay(self):
         conditions = [
-            self.ui.BTNClosePort.isEnabled(),
+            self.UserInterface.BTNClosePort.isEnabled(),
         ]
 
         if all(conditions):
-            self.ui.BTNSetDelay.setEnabled(True)
+            self.UserInterface.BTNSetDelay.setEnabled(True)
         else:
-            self.ui.BTNSetDelay.setEnabled(False)
+            self.UserInterface.BTNSetDelay.setEnabled(False)
 
-    def OpenSerialPort(self):
-        SerialPortName = self.ui.SELSerialPort.itemText(self.ui.SELSerialPort.currentIndex())
-        SerialPortBaudRate = int(self.ui.SELBaudRate.itemText(self.ui.SELBaudRate.currentIndex())[0:-5])
+    def _OpenSerialPort(self):
+        SerialPortName = self.UserInterface.SELSerialPort.itemText(self.UserInterface.SELSerialPort.currentIndex()).split(" ")[0]
+        SerialPortBaudRate = int(self.UserInterface.SELBaudRate.itemText(self.UserInterface.SELBaudRate.currentIndex())[0:-5])
+
+        self.SerialPort = QtSerialPort.QSerialPort()
+
         self.SerialPort.setPortName(SerialPortName)
         self.SerialPort.setBaudRate(SerialPortBaudRate)
+
         self.SerialPortInfo = QtSerialPort.QSerialPortInfo(self.SerialPort)
 
         if not self.SerialPortInfo.isBusy():
-            self.SerialPort.open(QtSerialPort.QSerialPort.ReadWrite)
-            if self.SerialPort.isOpen():
-                print("Open weona x)")
-            else:
-                print("Not open :(")
+            try:
+                self.SerialPort.open(QtSerialPort.QSerialPort.ReadWrite)
+                self.SerialPort.readyRead.connect(self._SerialPortProcessor)
+                return True
 
-        print("Port: {0:}".format(self.SerialPortInfo.portName()))
-        print("Location: {0:}".format(self.SerialPortInfo.systemLocation()))
-        print("Description: {0:}".format(self.SerialPortInfo.description()))
-        print("Manufacturer: {0:}".format(self.SerialPortInfo.manufacturer()))
-        print("Serial number: {0:}".format(self.SerialPortInfo.serialNumber()))
-        print("Vendor Identifier: {0:}".format(self.SerialPortInfo.vendorIdentifier()))
-        print("Product Identifier: {0:}".format(self.SerialPortInfo.productIdentifier()))
-        print("Busy: {0:}".format(self.SerialPortInfo.isBusy()))
+            except:
+                # Launch QTMessageBox
+                pass
+        else:
+            # Launch QTMessageBox
+            pass
+
+        return False
+
+    def _CloseSerialPort(self):
+        try:
+            self.SerialPort.close()
+            return True
+        except:
+            # Launch QTMessageBox
+            pass
+
+        return False
+
+    def _SerialPortProcessor(self):
+            if self.SerialPort.canReadLine():
+                try:
+                    text = self.SerialPort.readLine()
+                    text = bytes(text).decode('utf-8').replace('\r', '').replace('\n', '')
+                    self.Data = text.split('|')
+                    self.Data = dict([item.split(':') for item in self.Data])
+
+                    if 'M' in list(self.Data.keys()):
+                        self.UserInterface.SerialConsole.append(" * Change delay to: {0:} ms".format(self.Data['M']))
+                    else:
+                        if self._DataFormatVerification():
+                            self.UserInterface.SerialConsole.append(" * {0:}".format(self.Data))
+                            self._UpdatePlotter()
+
+                except:
+                    # launch QtMessageBox
+                    pass
+
+    def _DataFormatVerification(self):
+        sensor = self.UserInterface.SELSensor.currentText()
+
+        try:
+            InCommingsensorKeys = list(self.Data.keys())
+            NativeCommingsensorKeys = ASMSensorDataKeys[sensor]
+            InCommingsensorKeys.sort()
+            NativeCommingsensorKeys.sort()
+
+            if InCommingsensorKeys == NativeCommingsensorKeys:
+                for k, v in self.Data.items():
+                    self.Data[k] = round(float(v))
+
+                if self.Time == 0:
+                    self.Time = datetime.datetime.now()
+                self.Data['t'] = round((datetime.datetime.now() - self.Time).total_seconds(), 2)
+
+                if sensor == ACE:
+                    self.UserInterface.LBLMagnitude1.setProperty("value", self.Data["X"])
+                    self.UserInterface.LBLMagnitude2.setProperty("value", self.Data["Z"])
+                    self.UserInterface.LBLMagnitude3.setProperty("value", self.Data["Y"])
+
+                if sensor == BAR:
+                    self.UserInterface.LCDMagnitude1.setProperty("value", self.Data["T"])
+                    self.UserInterface.LCDMagnitude2.setProperty("value", self.Data["P"])
+
+                if sensor == THE:
+                    self.UserInterface.LCDMagnitude1.setProperty("value", self.Data["T"])
+                    self.UserInterface.LCDMagnitude2.setProperty("value", self.Data["H"])
+                    self.UserInterface.LCDMagnitude3.setProperty("value", self.Data["W"])
+
+                if sensor == ULT:
+                    self.UserInterface.LCDMagnitude1.setProperty("value", self.Data["D"])
+
+                if sensor == UVR:
+                    self.UserInterface.LCDMagnitude1.setProperty("value", self.Data["U"])
+
+                self.UserInterface.LDCTime.setProperty("value", self.Data["t"])
+
+                return True
+        except:
+            pass
+
+        return False
+
+    def _SetupPlotter(self):
+        sensor = self.UserInterface.SELSensor.currentText()
+
+        self.UserInterface.PlotLayout.removeWidget(self.PlotCanvas)
+        del(self.PlotCanvas)
+        if sensor == ACE:
+            self.PlotCanvas = ASMAccelerometerPlot(self.UserInterface.DisplayPanel, width=5, height=4, dpi=100)
+            self.UserInterface.LBLMagnitude1.setText(_translate("MainWindow", ASMSensorMagnitudeMap["X"]["Name"]))
+            self.UserInterface.LBLMagnitude2.setText(_translate("MainWindow", ASMSensorMagnitudeMap["Z"]["Name"]))
+            self.UserInterface.LBLMagnitude3.setText(_translate("MainWindow", ASMSensorMagnitudeMap["Y"]["Name"]))
+
+        if sensor == BAR:
+            self.PlotCanvas = ASMBarometerPlot(self.UserInterface.DisplayPanel, width=5, height=4, dpi=100)
+            self.UserInterface.LBLMagnitude1.setText(_translate("MainWindow", ASMSensorMagnitudeMap["T"]["Name"]))
+            self.UserInterface.LBLMagnitude2.setText(_translate("MainWindow", ASMSensorMagnitudeMap["P"]["Name"]))
+            self.UserInterface.LBLMagnitude3.setText(_translate("MainWindow", ASMSensorMagnitudeMap["-"]["Name"]))
+
+        if sensor == THE:
+            self.PlotCanvas = ASMThermohygrometer(self.UserInterface.DisplayPanel, width=5, height=4, dpi=100)
+            self.UserInterface.LBLMagnitude1.setText(_translate("MainWindow", ASMSensorMagnitudeMap["T"]["Name"]))
+            self.UserInterface.LBLMagnitude2.setText(_translate("MainWindow", ASMSensorMagnitudeMap["H"]["Name"]))
+            self.UserInterface.LBLMagnitude3.setText(_translate("MainWindow", ASMSensorMagnitudeMap["W"]["Name"]))
+
+        if sensor == ULT:
+            self.PlotCanvas = ASMUltrasonicPlot(self.UserInterface.DisplayPanel, width=5, height=4, dpi=100)
+            self.UserInterface.LBLMagnitude1.setText(_translate("MainWindow", ASMSensorMagnitudeMap["D"]["Name"]))
+            self.UserInterface.LBLMagnitude2.setText(_translate("MainWindow", ASMSensorMagnitudeMap["-"]["Name"]))
+            self.UserInterface.LBLMagnitude3.setText(_translate("MainWindow", ASMSensorMagnitudeMap["-"]["Name"]))
+
+        if sensor == UVR:
+            self.PlotCanvas = ASMUVRadiationPlot(self.UserInterface.DisplayPanel, width=5, height=4, dpi=100)
+            self.UserInterface.LBLMagnitude1.setText(_translate("MainWindow", ASMSensorMagnitudeMap["U"]["Name"]))
+            self.UserInterface.LBLMagnitude2.setText(_translate("MainWindow", ASMSensorMagnitudeMap["-"]["Name"]))
+            self.UserInterface.LBLMagnitude3.setText(_translate("MainWindow", ASMSensorMagnitudeMap["-"]["Name"]))
+
+        self.UserInterface.LBLTime.setText(_translate("MainWindow", ASMSensorMagnitudeMap["t"]["Name"]))
+        self.UserInterface.PlotLayout.addWidget(self.PlotCanvas)
+
+    def _UpdatePlotter(self):
+        try:
+            self.PlotCanvas.addData(self.Data)
+        except Exception as e:
+            raise(e)
+        # self.UserInterface.DisplayPanel.findChild(type(self.PlotCanvas)).addData(self.Data)
+        # self.UserInterface.PlotLayout.replaceWidget(self.PlotCanvas)
 
     def SELSensorOnCurrentIndexChanged(self):
         self._EnableSELBaudRate()
@@ -226,53 +419,62 @@ class ASM(QtWidgets.QMainWindow):
         self._EnableBTNSetDelay()
 
     def BTNOpenPortOnClick(self):
-        # self.OpenSerialPort()
-        self.ui.SELSensor.setEnabled(False)
-        self.ui.SELBaudRate.setEnabled(False)
-        self.ui.SELSerialPort.setEnabled(False)
-        self.ui.BTNOpenPort.setEnabled(False)
-        self.ui.BTNClosePort.setEnabled(True)
-        self._EnableINDelay()
-        self._EnableBTNSetDelay()
+            if self._OpenSerialPort():
+                self.UserInterface.SELSensor.setEnabled(False)
+                self.UserInterface.SELBaudRate.setEnabled(False)
+                self.UserInterface.SELSerialPort.setEnabled(False)
+                self.UserInterface.BTNOpenPort.setEnabled(False)
+
+                self._EnableBTNClosePort()
+                self._EnableINDelay()
+                self._EnableBTNSetDelay()
+                self._SetupPlotter()
+
+                self.UserInterface.SerialConsole.setText("")
+                self.UserInterface.SerialConsole.append("Configuration Summary: ")
+                self.UserInterface.SerialConsole.append("* Sensor   : " + self.UserInterface.SELSensor.currentText())
+                self.UserInterface.SerialConsole.append("* Port     : " + self.UserInterface.SELSerialPort.currentText())
+                self.UserInterface.SerialConsole.append("* Baud Rate: " + self.UserInterface.SELBaudRate.currentText())
+                self.UserInterface.SerialConsole.append("Collected data: ")
 
     def BTNClosePortOnClick(self):
-        self.ui.SELSensor.setEnabled(True)
-        self.ui.SELBaudRate.setEnabled(True)
-        self.ui.SELSerialPort.setEnabled(True)
-        self.ui.BTNOpenPort.setEnabled(True)
-        self.ui.BTNClosePort.setEnabled(False)
-        self._EnableINDelay()
-        self._EnableBTNSetDelay()
+        if self._CloseSerialPort():
+            self.UserInterface.SELSensor.setEnabled(True)
+            self.UserInterface.SELBaudRate.setEnabled(True)
+            self.UserInterface.SELSerialPort.setEnabled(True)
+            self.UserInterface.BTNOpenPort.setEnabled(True)
 
-    """
-    def SELSensor(self):
-        # SELSensor
-        pass
+            self._EnableBTNClosePort()
+            self._EnableINDelay()
+            self._EnableBTNSetDelay()
 
-    def SELBaudRate(self):
-        # SELBaudRate
-        pass
+            self.UserInterface.LBLMagnitude1.setText(_translate("MainWindow", "Magnitude 1"))
+            self.UserInterface.LBLMagnitude2.setText(_translate("MainWindow", "Magnitude 2"))
+            self.UserInterface.LBLMagnitude3.setText(_translate("MainWindow", "Magnitude 3"))
+            self.UserInterface.LBLTime.setText(_translate("MainWindow", "Time"))
 
-    def SELSerialPort(self):
-        # SELSerialPort
-        pass
+            self.UserInterface.LCDMagnitude1.setProperty("value", 0)
+            self.UserInterface.LCDMagnitude2.setProperty("value", 0)
+            self.UserInterface.LCDMagnitude3.setProperty("value", 0)
+            self.UserInterface.LDCTime.setProperty("value", 0)
 
-    def BTNClosePort(self):
-        # BTNClosePort
-        pass
+            self.UserInterface.PlotLayout.removeWidget(self.PlotCanvas)
+            del(self.PlotCanvas)
+            self.PlotCanvas = ASMPlotCanvas(self.UserInterface.DisplayPanel, width=5, height=4, dpi=100)
+            self.UserInterface.PlotLayout.addWidget(self.PlotCanvas)
+            self.Time = 0
+            self.UserInterface.SerialConsole.setText("")
 
-    def BTNOpenPort(self):
-        # BTNOpenPort
+    def BTNSetDelayOnClick(self):
+        try:
+            Delay = int(self.UserInterface.INDelay.text())
+            Delay = str(Delay).encode('utf-8')
+            # Delay = bytes("{0:.0f}".format(Delay)+"\n")
+            self.SerialPort.write(Delay)
+        except Exception as e:
+            print(e)
+            pass
         pass
-
-    def INDelay(self):
-        # INDelay
-        pass
-
-    def BTNSetDelay(self):
-        # BTNSetDelay
-        pass
-    """
 
 
 def main():

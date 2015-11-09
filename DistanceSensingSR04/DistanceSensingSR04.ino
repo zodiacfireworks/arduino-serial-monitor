@@ -24,9 +24,7 @@ void loop() {
     Serial.println(DELAY);
   }
 
-  Serial.print("S:0|D:");
-  Serial.print(sonar.ping_cm());
-  Serial.print("|0:");
-  Serial.println(0);
+  Serial.print("D:");
+  Serial.println(sonar.ping_cm());
   delay(DELAY);
 }
