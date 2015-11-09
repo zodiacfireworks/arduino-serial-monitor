@@ -324,9 +324,9 @@ class ASM(QtWidgets.QMainWindow):
                 self.Data['t'] = round((datetime.datetime.now() - self.Time).total_seconds(), 2)
 
                 if sensor == ACE:
-                    self.UserInterface.LBLMagnitude1.setProperty("value", self.Data["X"])
-                    self.UserInterface.LBLMagnitude2.setProperty("value", self.Data["Z"])
-                    self.UserInterface.LBLMagnitude3.setProperty("value", self.Data["Y"])
+                    self.UserInterface.LCDMagnitude1.setProperty("value", self.Data["X"])
+                    self.UserInterface.LCDMagnitude2.setProperty("value", self.Data["Z"])
+                    self.UserInterface.LCDMagnitude3.setProperty("value", self.Data["Y"])
 
                 if sensor == BAR:
                     self.UserInterface.LCDMagnitude1.setProperty("value", self.Data["T"])
