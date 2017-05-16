@@ -288,23 +288,23 @@ class ASM(QtWidgets.QMainWindow):
         return False
 
     def _SerialPortProcessor(self):
-            if self.SerialPort.canReadLine():
-                try:
-                    text = self.SerialPort.readLine()
-                    text = bytes(text).decode('utf-8').replace('\r', '').replace('\n', '')
-                    self.Data = text.split('|')
-                    self.Data = dict([item.split(':') for item in self.Data])
+        if self.SerialPort.canReadLine():
+            try:
+                text = self.SerialPort.readLine()
+                text = bytes(text).decode('utf-8').replace('\r', '').replace('\n', '')
+                self.Data = text.split('|')
+                self.Data = dict([item.split(':') for item in self.Data])
 
-                    if 'M' in list(self.Data.keys()):
-                        self.UserInterface.SerialConsole.append(" * Change delay to: {0:} ms".format(self.Data['M']))
-                    else:
-                        if self._DataFormatVerification():
-                            self.UserInterface.SerialConsole.append(" * {0:}".format(self.Data))
-                            self._UpdatePlotter()
+                if 'M' in list(self.Data.keys()):
+                    self.UserInterface.SerialConsole.append(" * Change delay to: {0:} ms".format(self.Data['M']))
+                else:
+                    if self._DataFormatVerification():
+                        self.UserInterface.SerialConsole.append(" * {0:}".format(self.Data))
+                        self._UpdatePlotter()
 
-                except:
-                    # launch QtMessageBox
-                    pass
+            except:
+                # launch QtMessageBox
+                pass
 
     def _DataFormatVerification(self):
         sensor = self.UserInterface.SELSensor.currentText()
