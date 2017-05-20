@@ -268,7 +268,7 @@ class ASM(QtWidgets.QMainWindow):
                 self.SerialPort.readyRead.connect(self._SerialPortProcessor)
                 return True
 
-            except:
+            except Exception as msg:
                 # Launch QTMessageBox
                 pass
         else:
@@ -281,7 +281,7 @@ class ASM(QtWidgets.QMainWindow):
         try:
             self.SerialPort.close()
             return True
-        except:
+        except Exception as msg:
             # Launch QTMessageBox
             pass
 
@@ -302,7 +302,7 @@ class ASM(QtWidgets.QMainWindow):
                         self.UserInterface.SerialConsole.append(" * {0:}".format(self.Data))
                         self._UpdatePlotter()
 
-            except:
+            except Exception as msg:
                 # launch QtMessageBox
                 pass
 
@@ -346,7 +346,8 @@ class ASM(QtWidgets.QMainWindow):
                 self.UserInterface.LDCTime.setProperty("value", self.Data["t"])
 
                 return True
-        except:
+        except Exception as msg:
+            # launch QtMessageBox
             pass
 
         return False
@@ -482,6 +483,7 @@ def main():
     ex = ASM()
     ex.setWindowTitle("{0:}".format(ProgramName))
     sys.exit(app.exec_())
+
 
 if __name__ == '__main__':
     main()

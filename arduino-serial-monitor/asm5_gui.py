@@ -1,12 +1,6 @@
 # -*- coding: utf-8 -*-
-
-# Form implementation generated from reading ui file 'asm_gui.ui'
-#
-# Created by: PyQt5 UI code generator 5.5.1
-#
-# WARNING! All changes made in this file will be lost!
-
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -23,9 +17,23 @@ class Ui_MainWindow(object):
         MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
         MainWindow.setToolTip("")
         MainWindow.setAutoFillBackground(False)
-        MainWindow.setStyleSheet("QMainWindow {\n"
-"    background-color: #FFFFFF;\n"
-"}")
+        MainWindow.setStyleSheet("""
+            QMainWindow {
+                background-color: #FFFFFF;
+            }
+
+            QLCDNumber {
+                background-color: #000000;
+                color: #FFFFFF;
+            }
+
+            QTextEdit {
+                background-color: #000000;
+                color: #00FF00;
+                font-family: monospace;
+                font-size: 10px;
+            }
+        """)
         MainWindow.setUnifiedTitleAndToolBarOnMac(False)
         self.MainPannel = QtWidgets.QWidget(MainWindow)
         self.MainPannel.setMinimumSize(QtCore.QSize(800, 0))
@@ -95,7 +103,7 @@ class Ui_MainWindow(object):
         self.INDelay.setText("1000")
         self.INDelay.setMaxLength(7)
         self.INDelay.setCursorPosition(4)
-        self.INDelay.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.INDelay.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
         self.INDelay.setCursorMoveStyle(QtCore.Qt.LogicalMoveStyle)
         self.INDelay.setObjectName("INDelay")
         self.BTNSetDelay = QtWidgets.QPushButton(self.SettingsPanel)
@@ -104,11 +112,11 @@ class Ui_MainWindow(object):
         self.BTNSetDelay.setCheckable(False)
         self.BTNSetDelay.setFlat(False)
         self.BTNSetDelay.setObjectName("BTNSetDelay")
-        self.Separator = QtWidgets.QFrame(self.MainPannel)
-        self.Separator.setGeometry(QtCore.QRect(290, 0, 10, 600))
-        self.Separator.setFrameShape(QtWidgets.QFrame.VLine)
-        self.Separator.setFrameShadow(QtWidgets.QFrame.Sunken)
-        self.Separator.setObjectName("Separator")
+        # self.Separator = QtWidgets.QFrame(self.MainPannel)
+        # self.Separator.setGeometry(QtCore.QRect(290, 0, 10, 600))
+        # self.Separator.setFrameShape(QtWidgets.QFrame.VLine)
+        # self.Separator.setFrameShadow(QtWidgets.QFrame.Sunken)
+        # self.Separator.setObjectName("Separator")
         self.DisplayPanel = QtWidgets.QGroupBox(self.MainPannel)
         self.DisplayPanel.setGeometry(QtCore.QRect(300, 10, 490, 580))
         self.DisplayPanel.setObjectName("DisplayPanel")
@@ -123,10 +131,6 @@ class Ui_MainWindow(object):
         self.LDCTime.setEnabled(False)
         self.LDCTime.setGeometry(QtCore.QRect(10, 30, 110, 30))
         self.LDCTime.setAutoFillBackground(False)
-        self.LDCTime.setStyleSheet("QLCDNumber {\n"
-"    background-color: #000000;\n"
-"    color: #FFFFFF;\n"
-"}")
         self.LDCTime.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.LDCTime.setFrameShadow(QtWidgets.QFrame.Plain)
         self.LDCTime.setLineWidth(0)
@@ -143,10 +147,6 @@ class Ui_MainWindow(object):
         self.LCDMagnitude1.setEnabled(False)
         self.LCDMagnitude1.setGeometry(QtCore.QRect(130, 30, 110, 30))
         self.LCDMagnitude1.setAutoFillBackground(False)
-        self.LCDMagnitude1.setStyleSheet("QLCDNumber {\n"
-"    background-color: #000000;\n"
-"    color: #FFFFFF;\n"
-"}")
         self.LCDMagnitude1.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.LCDMagnitude1.setFrameShadow(QtWidgets.QFrame.Plain)
         self.LCDMagnitude1.setLineWidth(0)
@@ -162,10 +162,6 @@ class Ui_MainWindow(object):
         self.LCDMagnitude2.setEnabled(False)
         self.LCDMagnitude2.setGeometry(QtCore.QRect(250, 30, 110, 30))
         self.LCDMagnitude2.setAutoFillBackground(False)
-        self.LCDMagnitude2.setStyleSheet("QLCDNumber {\n"
-"    background-color: #000000;\n"
-"    color: #FFFFFF;\n"
-"}")
         self.LCDMagnitude2.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.LCDMagnitude2.setFrameShadow(QtWidgets.QFrame.Plain)
         self.LCDMagnitude2.setLineWidth(0)
@@ -181,10 +177,6 @@ class Ui_MainWindow(object):
         self.LCDMagnitude3.setEnabled(False)
         self.LCDMagnitude3.setGeometry(QtCore.QRect(370, 30, 110, 30))
         self.LCDMagnitude3.setAutoFillBackground(False)
-        self.LCDMagnitude3.setStyleSheet("QLCDNumber {\n"
-"    background-color: #000000;\n"
-"    color: #FFFFFF;\n"
-"}")
         self.LCDMagnitude3.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.LCDMagnitude3.setFrameShadow(QtWidgets.QFrame.Plain)
         self.LCDMagnitude3.setLineWidth(0)
@@ -202,8 +194,6 @@ class Ui_MainWindow(object):
         self.SerialConsole = QtWidgets.QTextEdit(self.SerialConsolePanel)
         self.SerialConsole.setEnabled(False)
         self.SerialConsole.setGeometry(QtCore.QRect(10, 30, 260, 260))
-        self.SerialConsole.setStyleSheet("background-color: #000000;\n"
-"color: #00FF00;")
         self.SerialConsole.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.SerialConsole.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.SerialConsole.setLineWidth(1)
