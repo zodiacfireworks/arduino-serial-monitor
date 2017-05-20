@@ -1,27 +1,36 @@
 # Arduino Serial Monitor
 
 [![Preview](./banner.png)][1]
-[![MIT License][2]][1] [![Python][3]][1] [![Arduino][4]][1] [![C][5]][1] [![XML][6]][1] [![PyQt][7]][1] [![Qt Creator][8]][1] [![Physical Intrumentation][9]][1][![Jupyter Notebook][6]][1] [![Physics][7]][1]
+[![BSD 3 Clause License][2]][1] [![Python][3]][1] [![Arduino languaje][4]][1] [![PyQt][5]][1] [![Physics Intrumentation][6]][1] [![Electronics][7]][1] [![Arduino][8]][1] [![Real time][9]][1]
+
 
 Sample graphical user inteface to real time monitoring sensor signals interfaced with Arduino :smile:
 
 This program was developed as part of Phisical Instrumentaion course at the Major National University of San Marcos, Lima, Peru.
 
-*PS*: _The interface is in Spanish_ :sweat_smile:
-
 ## How to use
 
 1. Clone the repository
     ```
-    git clone https://github.com/zodiacfireworks/quantum-harmonic-oscillator.git
+    git clone https://github.com/zodiacfireworks/arduino-serial-monitor.git
     ```
 
-2. Start the jupyter nothebook server
+2. Install the depenedencies. (Is recomendable use conda)
     ```
-    search how to run pyQt5 Applications :v
+    conda create -n arduino-serial-monitor python=3 ncurses matplotlib
+    source activate arduino-serial-monitor
+    pip install pyqt5 --upgrade --force-reinstall
     ```
 
-3. Waits until the web browser is open, navigate to the repository directory and enjoy :smile:
+3. Enter to the application diretory and execute the program
+    ```
+    cd arduino-serial-monitor/arduino-serial-monitor
+    python asm5_main.py
+    ```
+
+4. Waits until the UI loads and use intuitively :sweat_smile:
+
+5. All the arduino stuff is in `sensors` directory, load the sketchs to your arduino before to use the interface.
 
 ## Author
 
@@ -29,31 +38,7 @@ This program was developed as part of Phisical Instrumentaion course at the Majo
 
 ## Licensing
 
-All resources developed by me in this repository is released under the MIT license.
-
-```text
-    The MIT License
-
-    Copyright (c) 2016 Martin Josemaría, http://zodiacfireworks.github.io/
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be included in
-    all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-    THE SOFTWARE.
-```
+All resources developed by me in this repository is released under the BSD-3-Clause license.
 
 Resource with its respective licences are protectect by them.
 
@@ -62,14 +47,11 @@ please let us know to give the respective credits and to put the things in
 order according to laws.
 
 [1]: git@github.com:zodiacfireworks/meteorological-faker.git
-[2]: https://img.shields.io/badge/License-MIT-blue.svg?maxAge=2592000&style=flat-square
+[2]: https://img.shields.io/badge/License-BSD%203%20Clause-blue.svg?maxAge=2592000&style=flat-square
 [3]: https://img.shields.io/badge/Language-Python-green.svg?maxAge=2592000&style=flat-square
 [4]: https://img.shields.io/badge/Language-Arduino-green.svg?maxAge=2592000&style=flat-square
-[5]: https://img.shields.io/badge/Language-C-blue.svg?maxAge=2592000&style=flat-square
-[6]: https://img.shields.io/badge/Language-XML-green.svg?maxAge=2592000&style=flat-square
-[7]: https://img.shields.io/badge/Tool-PyQt-green.svg?maxAge=2592000&style=flat-square
-[8]: https://img.shields.io/badge/Tool-Qt%20Creator-green.svg?maxAge=2592000&style=flat-square
-[9]: https://img.shields.io/badge/Topic-Physical%20intrumentation-green.svg?maxAge=2592000&style=flat-square
-[10]: https://img.shields.io/badge/Topic-Electronics-green.svg?maxAge=2592000&style=flat-square
-[11]: https://img.shields.io/badge/Topic-Arduino-green.svg?maxAge=2592000&style=flat-square
-[12]: https://img.shields.io/badge/Topic-Real%20Time-green.svg?maxAge=2592000&style=flat-square
+[5]: https://img.shields.io/badge/Tool-PyQt-green.svg?maxAge=2592000&style=flat-square
+[6]: https://img.shields.io/badge/Topic-Physical%20intrumentation-green.svg?maxAge=2592000&style=flat-square
+[7]: https://img.shields.io/badge/Topic-Electronics-green.svg?maxAge=2592000&style=flat-square
+[8]: https://img.shields.io/badge/Topic-Arduino-green.svg?maxAge=2592000&style=flat-square
+[9]: https://img.shields.io/badge/Topic-Real%20Time-green.svg?maxAge=2592000&style=flat-square
