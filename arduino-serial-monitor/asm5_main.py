@@ -9,6 +9,8 @@ from asm5_mpl import ASMBarometerPlot
 from asm5_mpl import ASMThermohygrometer
 from asm5_mpl import ASMUltrasonicPlot
 from asm5_mpl import ASMUVRadiationPlot
+from asm5_mpl import ASMSoilMoisturePlot
+from asm5_mpl import ASMAgricultureSystem
 
 import datetime
 import sys
@@ -23,6 +25,8 @@ BAR = "Barometer"
 THE = "Thermohygrometer"
 ULT = "Ultasonic Rangin Module"
 UVR = "UV Radiation Sensor"
+SMS = "Soil Moisture Sensor"
+AGR = "Agriculture System"
 
 ASMSensorList = [
     ACE,
@@ -30,6 +34,8 @@ ASMSensorList = [
     THE,
     ULT,
     UVR,
+    SMS,
+    AGR,
 ]
 
 ASMSensorDataKeys = {
@@ -38,6 +44,8 @@ ASMSensorDataKeys = {
     THE: ["S", "T", "H", "W"],
     ULT: ["D"],
     UVR: ["U"],
+    SMS: ["L"],
+    AGR: ["S", "T", "H", "L"],
 }
 
 ASMSensorMagnitudeMap = {
@@ -84,6 +92,10 @@ ASMSensorMagnitudeMap = {
     "U": {
         "Name": "UV Intensity",
         "Label": "UV Intensity (mW/cm^2)",
+    },
+    "L": {
+        "Name": "Soil Moisture",
+        "Label": "Soil Moisture (u)",
     },
     "-": {
         "Name": "None",
@@ -294,7 +306,7 @@ class ASM(QtWidgets.QMainWindow):
                 text = bytes(text).decode('utf-8').replace('\r', '').replace('\n', '')
                 self.Data = text.split('|')
                 self.Data = dict([item.split(':') for item in self.Data])
-
+                print(self.Data)
                 if 'M' in list(self.Data.keys()):
                     self.UserInterface.SerialConsole.append(" * Change delay to: {0:} ms".format(self.Data['M']))
                 else:
@@ -343,6 +355,14 @@ class ASM(QtWidgets.QMainWindow):
                 if sensor == UVR:
                     self.UserInterface.LCDMagnitude1.setProperty("value", self.Data["U"])
 
+                if sensor == SMS:
+                    self.UserInterface.LCDMagnitude1.setProperty("value", self.Data["L"])
+
+                if sensor == AGR:
+                    self.UserInterface.LCDMagnitude1.setProperty("value", self.Data["T"])
+                    self.UserInterface.LCDMagnitude2.setProperty("value", self.Data["H"])
+                    self.UserInterface.LCDMagnitude3.setProperty("value", self.Data["L"])
+
                 self.UserInterface.LDCTime.setProperty("value", self.Data["t"])
 
                 return True
@@ -386,6 +406,18 @@ class ASM(QtWidgets.QMainWindow):
             self.UserInterface.LBLMagnitude1.setText(_translate("MainWindow", ASMSensorMagnitudeMap["U"]["Name"]))
             self.UserInterface.LBLMagnitude2.setText(_translate("MainWindow", ASMSensorMagnitudeMap["-"]["Name"]))
             self.UserInterface.LBLMagnitude3.setText(_translate("MainWindow", ASMSensorMagnitudeMap["-"]["Name"]))
+
+        if sensor == SMS:
+            self.PlotCanvas = ASMSoilMoisturePlot(self.UserInterface.DisplayPanel, width=5, height=4, dpi=100)
+            self.UserInterface.LBLMagnitude1.setText(_translate("MainWindow", ASMSensorMagnitudeMap["L"]["Name"]))
+            self.UserInterface.LBLMagnitude2.setText(_translate("MainWindow", ASMSensorMagnitudeMap["-"]["Name"]))
+            self.UserInterface.LBLMagnitude3.setText(_translate("MainWindow", ASMSensorMagnitudeMap["-"]["Name"]))
+
+        if sensor == AGR:
+            self.PlotCanvas = ASMAgricultureSystem(self.UserInterface.DisplayPanel, width=5, height=4, dpi=100)
+            self.UserInterface.LBLMagnitude1.setText(_translate("MainWindow", ASMSensorMagnitudeMap["T"]["Name"]))
+            self.UserInterface.LBLMagnitude2.setText(_translate("MainWindow", ASMSensorMagnitudeMap["H"]["Name"]))
+            self.UserInterface.LBLMagnitude3.setText(_translate("MainWindow", ASMSensorMagnitudeMap["L"]["Name"]))
 
         self.UserInterface.LBLTime.setText(_translate("MainWindow", ASMSensorMagnitudeMap["t"]["Name"]))
         self.UserInterface.PlotLayout.addWidget(self.PlotCanvas)

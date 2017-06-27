@@ -302,3 +302,96 @@ class ASMUVRadiationPlot(ASMPlotCanvas):
 
         self.Figure.tight_layout()
         self.Figure.subplots_adjust(hspace=0.001)
+
+
+class ASMSoilMoisturePlot(ASMPlotCanvas):
+
+    def __init__(self, *args, **kwargs):
+        super(ASMSoilMoisturePlot, self).__init__(*args, **kwargs)
+
+        self.magnitudeMap = {
+            "t": {
+                "Name": "Time",
+                "Label": "Time (s)",
+            },
+            "L": {
+                "Color": "r-",
+                "Name": "Soil Moisture",
+                "Label": "Soil Moisture (u)",
+            },
+        }
+
+        self.AxesLength = 10
+        self.Axes = {}
+
+        self.Axes["L"] = self.Figure.add_subplot(1, 1, 1)
+        self.Axes["L"].set_ylim(0, 1250)
+        self.Axes["L"].set_yticks([0, 250, 500, 750, 1000, 1250])
+        self.Axes["L"].set_xlim([0, self.AxesLength])
+        self.Axes["L"].grid(True)
+
+        self.Lines = {}
+        self.Lines["L"] = None
+
+        self.Figure.tight_layout()
+        self.Figure.subplots_adjust(hspace=0.001)
+
+
+class ASMAgricultureSystem(ASMPlotCanvas):
+
+    def __init__(self, *args, **kwargs):
+        super(ASMAgricultureSystem, self).__init__(*args, **kwargs)
+
+        self.magnitudeMap = {
+            "t": {
+                "Name": "Time",
+                "Label": "Time (s)",
+            },
+            "T": {
+                "Color": "r-",
+                "Name": "Temperature",
+                "Label": "Temperature (°C)",
+            },
+            "H": {
+                "Color": "g-",
+                "Name": "Humidity",
+                "Label": "Humidity (%)",
+            },
+            "L": {
+                "Color": "b-",
+                "Name": "Soil Moisture",
+                "Label": "Soil Moisture (u)",
+            },
+        }
+
+        self.AxesLength = 10
+        self.Axes = {}
+
+        self.Axes["T"] = self.Figure.add_subplot(3, 1, 1)
+        self.Axes["T"].set_ylim(0, 100)
+        self.Axes["T"].set_yticks([0, 20, 40, 60, 80])
+        self.Axes["T"].set_xlim([0, self.AxesLength])
+        self.Axes["T"].grid(True)
+
+        self.Axes["H"] = self.Figure.add_subplot(3, 1, 2, sharex=self.Axes["T"])
+        self.Axes["H"].set_ylim(0, 100)
+        self.Axes["H"].set_yticks([0, 20, 40, 60, 80])
+        self.Axes["H"].set_xlim([0, self.AxesLength])
+        self.Axes["H"].grid(True)
+
+        self.Axes["L"] = self.Figure.add_subplot(3, 1, 3, sharex=self.Axes["T"])
+        self.Axes["L"].set_ylim(0, 1500)
+        self.Axes["L"].set_yticks([0, 500, 1000, 1500])
+        self.Axes["L"].set_xlim([0, self.AxesLength])
+        self.Axes["L"].grid(True)
+
+        xticklabels = self.Axes["T"].get_xticklabels() + self.Axes["H"].get_xticklabels()
+        pyplot.setp(xticklabels, visible=False)
+
+        self.Lines = {}
+        self.Lines["T"] = None
+        self.Lines["H"] = None
+        self.Lines["L"] = None
+
+        self.Figure.tight_layout()
+        self.Figure.subplots_adjust(hspace=0.001)
